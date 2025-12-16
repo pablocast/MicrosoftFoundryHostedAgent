@@ -1,0 +1,107 @@
+targetScope = 'resourceGroup'
+
+@description('Main location for the resources')
+param location string = 'northcentralus'
+
+@description('Name for the AI Foundry account')
+param foundryAccountName string
+
+@description('Name for the AI Project')
+param projectName string
+
+@description('Name for the Azure Container Registry')
+param acrName string
+
+resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
+  name: acrName
+  location: location
+  sku: {
+    name: 'Basic'
+  }
+  properties: {
+    adminUserEnabled: false
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
+  name: foundryAccountName
+  location: location
+  sku: {
+    name: 'S0'
+  }
+  kind: 'AIServices'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    allowProjectManagement: true
+    customSubDomainName: foundryAccountName
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+    publicNetworkAccess: 'Enabled'
+    disableLocalAuth: false
+  }
+
+  resource project 'projects' = {
+    name: projectName
+    location: location
+    identity: {
+      type: 'SystemAssigned'
+    }
+    properties: {
+      description: '${projectName} Project'
+      displayName: projectName
+    }
+  }
+
+  // Comment this line if it causes an Internal Server Error when
+  // re-deploying the Bicep template.
+  resource agentsCapabilityHost 'capabilityHosts' = {
+    name: 'agents'
+    properties: {
+      capabilityHostKind: 'Agents'
+      #disable-next-line BCP037
+      enablePublicHostingEnvironment: true
+    }
+  }
+}
+
+resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: acr
+  name: guid(acr.id, foundry::project.id, 'AcrPull')
+  properties: {
+    roleDefinitionId: acrPullRoleDefinition.id
+    principalId: foundry::project.identity.principalId
+    principalType: 'ServicePrincipal'
+    description: 'Allow AI Foundry Project to pull images from ACR'
+  }
+}
+
+resource acrPushRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: acr
+  name: guid(acr.id, deployer().objectId, 'AcrPush')
+  properties: {
+    roleDefinitionId: acrPushRoleDefinition.id
+    principalId: deployer().objectId
+    principalType: 'User'
+    description: 'Allow deployer to push images to ACR'
+  }
+}
+
+@description('This is the built-in ACR Pull role. See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers#acrpull')
+resource acrPullRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+}
+
+@description('This is the built-in ACR Push role. See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers#acrpush')
+resource acrPushRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '8311e382-0749-4cb8-b61a-304f252e45ec'
+}
+
+output projectId string = foundry::project.id
+output projectEndpoint string = foundry::project.properties.endpoints['AI Foundry API']
+output acrLoginServer string = acr.properties.loginServer
