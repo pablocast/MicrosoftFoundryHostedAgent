@@ -70,9 +70,9 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   }
 }
 
-resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource aiFoundryProjectCanPullFromAcr 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: acr
-  name: guid(acr.id, foundry::project.id, 'AcrPull')
+  name: guid(acr.id, foundry::project.id, acrPullRoleDefinition.id)
   properties: {
     roleDefinitionId: acrPullRoleDefinition.id
     principalId: foundry::project.identity.principalId
@@ -81,14 +81,25 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
-resource acrPushRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource currentUserCanPushToAcr 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: acr
-  name: guid(acr.id, deployer().objectId, 'AcrPush')
+  name: guid(acr.id, deployer().objectId, acrPushRoleDefinition.id)
   properties: {
     roleDefinitionId: acrPushRoleDefinition.id
     principalId: deployer().objectId
     principalType: 'User'
     description: 'Allow deployer to push images to ACR'
+  }
+}
+
+resource currentUserCanPerformDataActionsOnFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: foundry
+  name: guid(foundry.id, deployer().objectId, azureAiUserRoleDefinition.id)
+  properties: {
+    roleDefinitionId: azureAiUserRoleDefinition.id
+    principalId: deployer().objectId
+    principalType: 'User'
+    description: 'Allow deployer to perfom Data actions on Foundry resource'
   }
 }
 
@@ -100,6 +111,11 @@ resource acrPullRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-
 @description('This is the built-in ACR Push role. See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/containers#acrpush')
 resource acrPushRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   name: '8311e382-0749-4cb8-b61a-304f252e45ec'
+}
+
+@description('This is the built-in Azure AI User role. See https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/rbac-azure-ai-foundry?view=foundry#azure-ai-user')
+resource azureAiUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 }
 
 output projectId string = foundry::project.id

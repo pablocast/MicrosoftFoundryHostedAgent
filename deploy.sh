@@ -3,9 +3,9 @@ set -e
 
 RESOURCE_GROUP="hosted-agents"
 LOCATION="northcentralus"
-FOUNDRY_NAME="hosted-agents-<unique_name>"
+FOUNDRY_NAME="hosted-agents-ati1"
 PROJECT_NAME="hosted-agents"
-ACR_NAME="hostedagents<unique_name>"
+ACR_NAME="hostedagentsati1"
 IMAGE_TAG="v1"
 AGENT_NAME="myagent"
 
