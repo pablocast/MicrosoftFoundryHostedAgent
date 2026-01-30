@@ -1,20 +1,23 @@
 targetScope = 'resourceGroup'
 
-@description('Main location for the resources')
-param location string = 'northcentralus'
+@description('Main location for the resources. Check https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/hosted-agents?view=foundry&tabs=cli#region-availability for supported regions.')
+param location string
 
-@description('Name for the AI Foundry account')
-param foundryAccountName string
+@minLength(1)
+@maxLength(64)
+@description('Name of the the environment which is used to generate a short unique hash used in all resources.')
+param environmentName string
 
-@description('Name for the AI Project')
-param projectName string
+var tags = {
+  'azd-env-name': environmentName
+}
 
-@description('Name for the Azure Container Registry')
-param acrName string
+var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
 
 resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
-  name: acrName
+  name: 'acr${resourceToken}'
   location: location
+  tags: tags
   sku: {
     name: 'Basic'
   }
@@ -25,8 +28,9 @@ resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
 }
 
 resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
-  name: foundryAccountName
+  name: 'foundry${resourceToken}'
   location: location
+  tags: tags
   sku: {
     name: 'S0'
   }
@@ -36,7 +40,7 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   }
   properties: {
     allowProjectManagement: true
-    customSubDomainName: foundryAccountName
+    customSubDomainName: 'foundry${resourceToken}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -47,19 +51,19 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   }
 
   resource project 'projects' = {
-    name: projectName
+    name:'hosted-agent'
     location: location
+    tags: tags
     identity: {
       type: 'SystemAssigned'
     }
     properties: {
-      description: '${projectName} Project'
-      displayName: projectName
+      description: 'Hosted Agent Demo Project'
+      displayName: 'Hosted Agent Demo'
     }
   }
 
-  // Comment this line if it causes an Internal Server Error when
-  // re-deploying the Bicep template.
+  // Comment this line if it causes an Internal Server Error when re-deploying the Bicep template.
   resource agentsCapabilityHost 'capabilityHosts' = {
     name: 'agents'
     properties: {
@@ -118,6 +122,9 @@ resource azureAiUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022
   name: '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 }
 
-output projectId string = foundry::project.id
-output projectEndpoint string = foundry::project.properties.endpoints['AI Foundry API']
-output acrLoginServer string = acr.properties.loginServer
+output AZURE_PROJECT_ID string = foundry::project.id
+output AZURE_PROJECT_ENDPOINT string = foundry::project.properties.endpoints['AI Foundry API']
+output AZURE_ACR_LOGIN_SERVER string = acr.properties.loginServer
+output AZURE_ACR_NAME string = acr.name
+output AZURE_FOUNDRY_ACCOUNT_NAME string = foundry.name
+output AZURE_PROJECT_NAME string = foundry::project.name

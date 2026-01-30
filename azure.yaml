@@ -1,0 +1,13 @@
+name: hostedagent
+metadata:
+  template: hostedagent
+
+infra:
+  provider: bicep
+  path: infra
+
+hooks:
+  postprovision:
+    shell: sh
+    run: ./scripts/postprovision.sh
+    continueOnError: false
