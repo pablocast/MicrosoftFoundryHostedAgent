@@ -8,6 +8,14 @@ param location string
 @description('Name of the the environment which is used to generate a short unique hash used in all resources.')
 param environmentName string
 
+
+// Model parameters
+param modelName string
+param modelFormat string
+param modelVersion string
+param modelSkuName string
+param modelCapacity int
+
 var tags = {
   'azd-env-name': environmentName
 }
@@ -26,6 +34,27 @@ resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
     publicNetworkAccess: 'Enabled'
   }
 }
+
+// Enable monitoring via Log Analytics and Application Insights
+module logAnalytics './monitor/loganalytics.bicep' = {
+  name: 'logAnalytics'
+  params: {
+    location: location
+    tags: tags
+    name: 'logs-${resourceToken}'
+  }
+}
+
+module applicationInsights './monitor/applicationinsights.bicep' = {
+  name: 'applicationInsights'
+  params: {
+    location: location
+    tags: tags
+    name: 'appi-${resourceToken}'
+    logAnalyticsWorkspaceId: logAnalytics.outputs.id
+  }
+}
+
 
 resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   name: 'foundry${resourceToken}'
@@ -63,6 +92,7 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
     }
   }
 
+  
   // Comment this line if it causes an Internal Server Error when re-deploying the Bicep template.
   resource agentsCapabilityHost 'capabilityHosts' = {
     name: 'agents'
@@ -73,6 +103,43 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
     }
   }
 }
+
+// Model deployment
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-04-01-preview'=  {
+  parent: foundry
+  name: modelName
+  sku : {
+    capacity: modelCapacity
+    name: modelSkuName
+  }
+  properties: {
+    model:{
+      name: modelName
+      format: modelFormat
+      version: modelVersion
+    }
+  }
+}
+
+// Create connection to insights
+resource appInsightConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
+  parent: foundry::project
+  name: 'appi-connection'
+  properties: {
+    category: 'AppInsights'
+    target: applicationInsights.outputs.id
+    authType: 'ApiKey'
+    isSharedToAll: true
+    credentials: {
+      key: applicationInsights.outputs.connectionString
+    }
+    metadata: {
+      ApiType: 'Azure'
+      ResourceId: applicationInsights.outputs.id
+    }
+  }
+}
+
 
 resource aiFoundryProjectCanPullFromAcr 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: acr
@@ -122,11 +189,22 @@ resource azureAiUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022
   name: '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 }
 
+// role 
+resource projectCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: foundry
+  name: guid(subscription().id, resourceGroup().id, foundry::project.name, '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+  properties: {
+    principalId: foundry::project.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+  }
+}
+
 output AZURE_PROJECT_ID string = foundry::project.id
-output AZURE_PROJECT_ENDPOINT string = foundry::project.properties.endpoints['AI Foundry API']
+output AZURE_AI_PROJECT_ENDPOINT string = foundry::project.properties.endpoints['AI Foundry API']
 output AZURE_ACR_LOGIN_SERVER string = acr.properties.loginServer
 output AZURE_ACR_NAME string = acr.name
 output AZURE_FOUNDRY_ACCOUNT_NAME string = foundry.name
 output AZURE_PROJECT_NAME string = foundry::project.name
-output AZURE_OPENAI_ENDPOINT string = foundry.properties.endpoints['OpenAI Language Service']
-output AZURE_OPENAI_CHAT_DEPLOYMENT_NAME string = models
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsights.outputs.connectionString
+output AZURE_OPENAI_ENDPOINT string = foundry.properties.endpoints['OpenAI Language Model Instance API']
