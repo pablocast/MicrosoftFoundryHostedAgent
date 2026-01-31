@@ -14,9 +14,11 @@ CONTAINER_IMAGE = os.getenv("CONTAINER_IMAGE", "")
 APPINSIGHTS_CONNECTION_STRING = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
 PROJECT_NAME = os.getenv("PROJECT_NAME", "")
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_OPENAI_CHAT_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "")
 
 def main():
-    print("🚀 Deploying AI Agent to Azure Foundry...")
+    print(" Deploying AI Agent to Azure Foundry...")
     print(f"   Foundry: {ACCOUNT_NAME}")
     print(f"   Project: {PROJECT_ENDPOINT}")
     print(f"   Agent Name: {AGENT_NAME}")
@@ -24,14 +26,14 @@ def main():
     print()
 
     # Initialize the client
-    print("🔐 Authenticating with Azure...")
+    print(" Authenticating with Azure...")
     client = AIProjectClient(
         endpoint=PROJECT_ENDPOINT,
         credential=DefaultAzureCredential()
     )
 
     # Create the agent from container image
-    print("📦 Creating hosted agent version...")
+    print(" Creating hosted agent version...")
     agent = client.agents.create_version(
         agent_name=AGENT_NAME,
         definition=ImageBasedHostedAgentDefinition(
@@ -42,17 +44,15 @@ def main():
             memory="7Gi",
             image=CONTAINER_IMAGE,
             environment_variables={
-                "OLLAMA_BASE_URL": "http://localhost:11434/v1/",
-                # Note: settings this env variable will make the hosted agent crash
-                # "AGENT_PROJECT_NAME": f"{ACCOUNT_NAME}/{PROJECT_NAME}", # expected format: account/project
-                # "AZURE_AI_PROJECT_ENDPOINT": PROJECT_ENDPOINT,
+                "AZURE_OPENAI_ENDPOINT": AZURE_OPENAI_ENDPOINT,
+                "AZURE_OPENAI_CHAT_DEPLOYMENT_NAME": AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
                 "APPLICATIONINSIGHTS_CONNECTION_STRING": APPINSIGHTS_CONNECTION_STRING,
             }
         )
     )
 
     print()
-    print("✅ Agent version created successfully!")
+    print(" Agent version created successfully!")
     print(f"   Agent ID: {agent.id}")
     print(f"   Agent Name: {agent.name}")
     print(f"   Agent Version: {agent.version}")

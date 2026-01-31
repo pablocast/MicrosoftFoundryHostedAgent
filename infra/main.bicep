@@ -128,3 +128,5 @@ output AZURE_ACR_LOGIN_SERVER string = acr.properties.loginServer
 output AZURE_ACR_NAME string = acr.name
 output AZURE_FOUNDRY_ACCOUNT_NAME string = foundry.name
 output AZURE_PROJECT_NAME string = foundry::project.name
+output AZURE_OPENAI_ENDPOINT string = foundry.properties.endpoints['OpenAI Language Service']
+output AZURE_OPENAI_CHAT_DEPLOYMENT_NAME string = models

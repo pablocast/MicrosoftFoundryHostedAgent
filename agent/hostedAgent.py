@@ -1,18 +1,36 @@
 import os
 from agent_framework import ChatAgent
-from agent_framework.openai import OpenAIChatClient
-from azure.ai.agentserver.agentframework import from_agent_framework
+from agent_framework.openai import AzureOpenAIChatClient
+from azure.ai.agentserver.agentframework import from_agent_framework, FoundryToolsChatMiddleware
+from azure.identity import DefaultAzureCredential
+from asyncio import tools
 
 def main() -> None:
-    chat_client = OpenAIChatClient(
-        model_id="llama3.2:3b",
-        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1/"),
-        api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+    # Validate required environment variables
+    required_env_vars = [
+        "AZURE_OPENAI_ENDPOINT",
+        "AZURE_OPENAI_CHAT_DEPLOYMENT_NAME",
+    ]
+    for env_var in required_env_vars:
+        assert env_var in os.environ and os.environ[env_var], (
+            f"{env_var} environment variable must be set."
+        )
+
+    # Configure tools for the agent
+    tools=[{"type": "web_search_preview"}]
+    if project_tool_connection_id := os.environ.get("AZURE_AI_PROJECT_TOOL_CONNECTION_ID"):
+        tools.append({"type": "mcp", "project_connection_id": project_tool_connection_id})
+
+    # Create the chat client with Foundry tools middleware
+    chat_client = AzureOpenAIChatClient(
+        credential=DefaultAzureCredential(),
+        middleware=FoundryToolsChatMiddleware(tools)
     )
-    agent = ChatAgent(chat_client,
-                      name = "myagent",
-                      id = "myagent",
-                      instructions="You are sarcastic and reluctant to help, but eventually you will provide the answer.")
+    
+    agent = chat_client.create_agent(
+        name="FoundryToolAgent",
+        instructions="You are a helpful assistant with access to various tools."
+    )
 
     # Use the agent server adapter to host the agent
     # This automatically creates a REST API on port 8088 with /responses endpoint
