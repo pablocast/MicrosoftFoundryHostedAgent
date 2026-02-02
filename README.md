@@ -1,4 +1,4 @@
-# Microsoft Foundry Hosted Agent Demo
+![logo.png](./logo.png) Microsoft Foundry Hosted Agent Demo
 
 This repository demonstrates how to deploy a [Hosted Agent](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/hosted-agents?view=foundry) on [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry?view=foundry).  
 
