@@ -7,19 +7,16 @@ from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import ImageBasedHostedAgentDefinition, ProtocolVersionRecord, AgentProtocol
 from azure.identity import DefaultAzureCredential
 
-from dotenv import load_dotenv
-load_dotenv("../.env", override=True)
-
 # Configuration - can be overridden by environment variables
-PROJECT_ENDPOINT = os.environ.get("PROJECT_ENDPOINT", "")
-AGENT_NAME =  os.environ.get("AGENT_NAME", "MyAgent")
-CONTAINER_IMAGE = os.environ.get("CONTAINER_IMAGE", "")
-APPINSIGHTS_CONNECTION_STRING = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
-PROJECT_NAME = os.environ.get("PROJECT_NAME", "")
-ACCOUNT_NAME = os.environ.get("ACCOUNT_NAME", "")
-AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
-AZURE_OPENAI_CHAT_DEPLOYMENT_NAME = os.environ.get("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "gpt-5.2")
-AZURE_AI_PROJECT_TOOL_CONNECTION_ID = os.environ.get("AZURE_AI_PROJECT_TOOL_CONNECTION_ID", "/subscriptions/06d043e2-5a2e-46bf-bf48-fffee525f377/resourceGroups/rg-foundry-hosted-agent/providers/Microsoft.CognitiveServices/accounts/foundryta3v6dfxutnwu/projects/hosted-agent/connections/mcp-connection")
+PROJECT_ENDPOINT = os.getenv("PROJECT_ENDPOINT", "")
+AGENT_NAME =  os.getenv("AGENT_NAME", "MyAgent")
+CONTAINER_IMAGE = os.getenv("CONTAINER_IMAGE", "")
+APPINSIGHTS_CONNECTION_STRING = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING", "")
+PROJECT_NAME = os.getenv("PROJECT_NAME", "")
+ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_OPENAI_CHAT_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "")
+AZURE_AI_PROJECT_TOOL_CONNECTION_ID = os.getenv("AZURE_AI_PROJECT_TOOL_CONNECTION_ID", "")
 
 def main():
     print(" Deploying AI Agent to Azure Foundry...")
