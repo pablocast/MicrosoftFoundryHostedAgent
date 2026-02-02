@@ -1,4 +1,8 @@
-![logo.png](./logo.png) Microsoft Foundry Hosted Agent Demo
+<div align="center">
+    <img src="./logo.png" alt="logo" width="200"/>
+    <h1>Microsoft Foundry Hosted Agent Demo</h1>
+</div>
+
 
 This repository demonstrates how to deploy a [Hosted Agent](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/hosted-agents?view=foundry) on [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry?view=foundry).  
 
