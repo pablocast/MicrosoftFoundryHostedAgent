@@ -7,6 +7,22 @@
     },
     "location": {
       "value": "${AZURE_LOCATION}"
+    },
+    "modelName": {
+      "value": "gpt-5.2"
+    },
+    "modelFormat": {
+      "value": "OpenAI"
+    },
+    "modelVersion": {
+      "value": "2025-12-11"
+    },
+    "modelSkuName": {
+      "value": "GlobalStandard"
+    },
+    "modelCapacity": {
+      "value": 500
     }
   }
+  
 }

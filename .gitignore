@@ -41,5 +41,8 @@ Thumbs.db
 # Azure
 .azure/
 
+# Devcontainer
+.devcontainer
+
 # Logs
 *.log

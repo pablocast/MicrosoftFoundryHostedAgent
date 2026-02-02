@@ -16,6 +16,7 @@ PROJECT_NAME = os.getenv("PROJECT_NAME", "")
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
 AZURE_OPENAI_CHAT_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME", "")
+AZURE_AI_PROJECT_TOOL_CONNECTION_ID = os.getenv("AZURE_AI_PROJECT_TOOL_CONNECTION_ID", "")
 
 def main():
     print(" Deploying AI Agent to Azure Foundry...")
@@ -42,11 +43,13 @@ def main():
             ],
             cpu="3.5",
             memory="7Gi",
-            image=CONTAINER_IMAGE,
+            image=CONTAINER_IMAGE, 
             environment_variables={
                 "AZURE_OPENAI_ENDPOINT": AZURE_OPENAI_ENDPOINT,
                 "AZURE_OPENAI_CHAT_DEPLOYMENT_NAME": AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
                 "APPLICATIONINSIGHTS_CONNECTION_STRING": APPINSIGHTS_CONNECTION_STRING,
+                "AZURE_AI_PROJECT_ENDPOINT": PROJECT_ENDPOINT,
+                "AZURE_AI_PROJECT_TOOL_CONNECTION_ID": AZURE_AI_PROJECT_TOOL_CONNECTION_ID
             }
         )
     )

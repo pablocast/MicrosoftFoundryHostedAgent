@@ -20,7 +20,8 @@ var tags = {
   'azd-env-name': environmentName
 }
 
-var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location))
+param timestamp string = utcNow('yyyyMMddHHmmss')
+var resourceToken = toLower(uniqueString(resourceGroup().id, environmentName, location, timestamp))
 
 resource acr 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
   name: 'acr${resourceToken}'
@@ -140,6 +141,17 @@ resource appInsightConnection 'Microsoft.CognitiveServices/accounts/projects/con
   }
 }
 
+// Create a connection to MCP
+resource mcpConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
+  parent: foundry::project
+  name: 'mcp-connection'
+  properties: {
+    category: 'RemoteTool'
+    target: 'https://learn.microsoft.com/api/mcp'
+    authType: 'None'
+    isSharedToAll: false
+  }
+}
 
 resource aiFoundryProjectCanPullFromAcr 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: acr
@@ -201,10 +213,12 @@ resource projectCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/rol
 }
 
 output AZURE_PROJECT_ID string = foundry::project.id
-output AZURE_AI_PROJECT_ENDPOINT string = foundry::project.properties.endpoints['AI Foundry API']
+output AZURE_PROJECT_ENDPOINT string = foundry::project.properties.endpoints['AI Foundry API']
 output AZURE_ACR_LOGIN_SERVER string = acr.properties.loginServer
 output AZURE_ACR_NAME string = acr.name
 output AZURE_FOUNDRY_ACCOUNT_NAME string = foundry.name
 output AZURE_PROJECT_NAME string = foundry::project.name
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsights.outputs.connectionString
 output AZURE_OPENAI_ENDPOINT string = foundry.properties.endpoints['OpenAI Language Model Instance API']
+output AZURE_OPENAI_CHAT_DEPLOYMENT_NAME string = modelDeployment.name
+output AZURE_AI_PROJECT_TOOL_CONNECTION_ID string = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.CognitiveServices/accounts/${foundry.name}/projects/${foundry::project.name}/connections/${mcpConnection.name}'
