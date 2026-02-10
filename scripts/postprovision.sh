@@ -24,6 +24,7 @@ sleep 10
 echo "✅ Container built and pushed"
 echo "🤖 Deploying agent..."
 
+export MSYS_NO_PATHCONV=1
 export PROJECT_ENDPOINT="${AZURE_PROJECT_ENDPOINT}"
 export AGENT_NAME="${AZURE_AGENT_NAME:-myagent}"
 export CONTAINER_IMAGE="${CONTAINER_IMAGE}"
